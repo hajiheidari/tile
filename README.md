@@ -14,7 +14,7 @@ godot --path .
 
 Pull backward near your marble and release. Pull farther for more power. Drag onto the circular × zone to cancel. Mouse and touch share the same input logic. The actual shot comes from the animated thumb; there is no slingshot.
 
-The menu defaults to Persian; English, Arabic and Hindi are available. Settings include hand style, skin tone, sound, mobile haptics and a low graphics option. The aiming camera is fixed. Reduced motion is therefore the default behavior for all players at this stage.
+The menu defaults to Persian; English, Arabic and Hindi are available. Settings include hand style, skin tone, sound, mobile haptics and a low graphics option. The aiming camera is fixed. Reduced motion is on by default; turning it off permits a restrained lateral camera follow during shots.
 
 ## Implemented
 

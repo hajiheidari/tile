@@ -27,7 +27,8 @@ func _ready() -> void:
 	stream.data = bytes
 	rolling.stream = stream
 	rolling.volume_db = -80
-	rolling.play()
+	if DisplayServer.get_name() != "headless":
+		rolling.play()
 
 func set_roll(speed: float) -> void:
 	if is_instance_valid(rolling):

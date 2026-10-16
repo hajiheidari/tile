@@ -95,3 +95,4 @@ func _draw() -> void:
 	draw_circle(cancel_center(),43,Color(0.65,0.18,0.15,0.9) if canceled() else Color(0.45,0.18,0.15,0.7))
 	draw_line(cancel_center()+Vector2(-12,-12),cancel_center()+Vector2(12,12),Color.WHITE,4,true)
 	draw_line(cancel_center()+Vector2(12,-12),cancel_center()+Vector2(-12,12),Color.WHITE,4,true)
+	draw_string(font,cancel_center()+Vector2(52,8),cancel_text,HORIZONTAL_ALIGNMENT_LEFT,240,17,Color.WHITE)

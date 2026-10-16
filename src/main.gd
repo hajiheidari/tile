@@ -194,6 +194,7 @@ func line(a: Vector3, b: Vector3, radius: float, color: String) -> void:
 	var material := StandardMaterial3D.new()
 	material.albedo_color=Color(color)
 	material.cull_mode=BaseMaterial3D.CULL_DISABLED
+	material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.roughness=1
 	mesh.material_override=material
 	board.add_child(mesh)
@@ -263,6 +264,7 @@ func label(parent: Node, text: String, font_size: int = 22) -> Label:
 func button(parent: Node, text: String, action: Callable, accent: bool = false) -> Button:
 	var b := Button.new()
 	b.text = text
+	b.clip_text = true
 	b.custom_minimum_size.y = 64
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if accent:
@@ -336,6 +338,8 @@ func menu() -> void:
 		hero.mouse_filter=Control.MOUSE_FILTER_IGNORE
 		v.add_child(hero)
 	var location := OptionButton.new()
+	location.fit_to_longest_item=false
+	location.clip_text=true
 	location.custom_minimum_size.y = 62
 	location.add_theme_stylebox_override("normal",panel_style())
 	for key in COUNTRIES:
@@ -420,6 +424,7 @@ func spawn_shooters(z: float) -> void:
 
 func start_qualifier() -> void:
 	lifecycle += 1
+	rules.start(selected_mode,first_player)
 	qualifier = true
 	qualifier_player = first_player
 	qualifier_shots = 0
@@ -456,16 +461,21 @@ func prepare_turn() -> void:
 		match_result()
 		return
 	clear_sheet()
+	camera.position=Vector3(0,0.95,2.15)
+	camera.look_at(Vector3(0,0.20,-0.45))
 	phase = "aim"
 	settling_time = 0
 	shot_time = 0
 	var shooter: RigidBody3D = shooters[player()]
+	var turn_token: int = lifecycle
 	# Square uses a fresh marked launch position each turn; wall has one shot per round.
 	if not qualifier and selected_mode=="square":
 		shooter.teleport(Vector3(-0.10 if player()==0 else 0.10,terrain.height(-0.10 if player()==0 else 0.10,0.94)+Rules.RADIUS+0.002,0.94))
 		shooter.freeze = false
 		await get_tree().physics_frame
 		await get_tree().physics_frame
+		if turn_token != lifecycle:
+			return
 	shooter.freeze = false
 	art.hand_root.position = shooter.position
 	art.hand_root.visible = true
@@ -473,6 +483,7 @@ func prepare_turn() -> void:
 	update_hud()
 	gesture.enabled = not (against_ai and player()==1)
 	gesture.power_text = t("power")
+	gesture.cancel_text = t("cancel")
 	gesture.queue_redraw()
 	if against_ai and player()==1:
 		var token: int = lifecycle
@@ -584,11 +595,14 @@ func ai_shot() -> void:
 	speed *= rng.randf_range(1-error,1+error)
 	shoot(direction,clampf((speed-0.2)/(Rules.MAX_SHOT_SPEED-0.2),0.0,1.0))
 
-func _process(_dt: float) -> void:
+func _process(dt: float) -> void:
 	if phase=="aim" and not shooters.is_empty():
 		var m: RigidBody3D = shooters[player()]
 		gesture.shooter_screen = camera.unproject_position(m.global_position)
 		gesture.queue_redraw()
+	elif phase=="rolling" and not reduced_motion:
+		var follow_x: float = clampf(shooters[player()].position.x*0.12,-0.10,0.10)
+		camera.position.x=lerpf(camera.position.x,follow_x,minf(dt*2,1))
 
 func _physics_process(dt: float) -> void:
 	if phase != "rolling":
@@ -747,4 +761,10 @@ func qa_run() -> void:
 	await get_tree().create_timer(1.0).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("res://build/qa-fa.png")
+	for code in ["ar","hi"]:
+		loc.language=code
+		menu()
+		await get_tree().create_timer(0.25).timeout
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("res://build/qa-"+code+".png")
 	get_tree().quit()
