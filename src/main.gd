@@ -342,6 +342,8 @@ func menu() -> void:
 	location.clip_text=true
 	location.custom_minimum_size.y = 62
 	location.add_theme_stylebox_override("normal",panel_style())
+	location.add_theme_stylebox_override("hover",panel_style(Color("f9dfb3")))
+	location.add_theme_stylebox_override("pressed",panel_style(Color("e7d3ab")))
 	for key in COUNTRIES:
 		location.add_item(t(key))
 	location.select(selected_location)
@@ -509,7 +511,7 @@ func update_hud() -> void:
 	if not qualifier and selected_mode=="wall":
 		label(v,t("round")+" "+str(rules.round_number)+" / 5",17)
 	label(v,t("turn")+" · "+player_name(player()),19)
-	var pause_button: Button = button(hud,"Ⅱ",pause_game)
+	var pause_button: Button = button(hud,"II",pause_game)
 	pause_button.position = Vector2(640,210)
 	pause_button.size = Vector2(60,64)
 	status = Label.new()

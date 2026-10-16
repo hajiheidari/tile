@@ -71,6 +71,24 @@ func run() -> void:
 	game.human_shot(Vector2(0,-1),0.03)
 	await wait_for_shot()
 	check(game.qualifier_shots==2 and game.phase=="result","qualifier resolves only after paired shots")
+	game.selected_mode="square"
+	game.against_ai=false
+	game.difficulty=2
+	game.rng.seed=17012026
+	game.start_match(0)
+	await frames(10)
+	for i in range(80):
+		if game.rules.finished: break
+		if game.phase!="aim": game.prepare_turn()
+		await frames(5)
+		game.ai_shot()
+		await wait_for_shot()
+		if "--ai-trace" in OS.get_cmdline_user_args() and i<5:
+			print("After square shot ",i,": ",game.marbles.map(func(m): return [m.marble_id,m.position]))
+	check(game.rules.finished,"a complete physical square match reaches a result without stuck turns")
+	check(game.rules.scores[0]+game.rules.scores[1]>0,"heuristic planner actually knocks targets out using legal physics")
+	check(game.rules.scores[0]+game.rules.scores[1]<=6,"complete physical match cannot award more than six targets")
+	print("Square simulation: ",game.rules.total_shots," shots, scores ",game.rules.scores)
 	print("INTEGRATION RESULT: ",checks," checks, ",failures," failures")
 	await frames(120)
 	game.queue_free()
