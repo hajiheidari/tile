@@ -508,7 +508,7 @@ func update_hud() -> void:
 	score_label = label(v,player_name(0)+"   "+str(rules.scores[0])+"      :      "+str(rules.scores[1])+"   "+player_name(1),22)
 	if not qualifier and selected_mode=="wall":
 		label(v,t("round")+" "+str(rules.round_number)+" / 5",17)
-	label(v,player_name(player())+" · "+t("turn"),19)
+	label(v,t("turn")+" · "+player_name(player()),19)
 	var pause_button: Button = button(hud,"Ⅱ",pause_game)
 	pause_button.position = Vector2(640,210)
 	pause_button.size = Vector2(60,64)
@@ -707,6 +707,11 @@ func turn_handoff(detail: String, action: Callable) -> void:
 	label(v,t("handoff") if not against_ai else t("turn"),23)
 	if not detail.is_empty(): label(v,detail,19)
 	button(v,t("ready"),action,true)
+	if against_ai and player()==1:
+		var token: int = lifecycle
+		await get_tree().create_timer(0.7).timeout
+		if token==lifecycle and phase=="handoff":
+			action.call()
 
 func match_result() -> void:
 	phase="finished"
