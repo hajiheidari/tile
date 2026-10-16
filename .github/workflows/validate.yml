@@ -1,0 +1,45 @@
+name: Validate offline prototype
+on:
+  push:
+    branches: [main, 'codex/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-and-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GODOT_VERSION: 4.5.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned official engine and templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --retry 3 -L "https://downloads.godotengine.org/?version=${GODOT_VERSION}&flavor=stable&slug=linux.x86_64.zip" -o /tmp/godot.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          echo "/tmp/godot" >> "$GITHUB_PATH"
+          curl --fail --retry 3 -L "https://downloads.godotengine.org/?version=${GODOT_VERSION}&flavor=stable&slug=export_templates.tpz" -o /tmp/templates.zip
+          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          unzip -j -q /tmp/templates.zip 'templates/web_nothreads_release.zip' 'templates/web_nothreads_debug.zip' 'templates/windows_release_x86_64.exe' 'templates/version.txt' -d "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p build/web build/windows
+      - name: Import
+        run: Godot_v4.5.1-stable_linux.x86_64 --headless --editor --path . --import --quit
+      - name: Rules and real physics scenarios
+        run: Godot_v4.5.1-stable_linux.x86_64 --headless --path . --script res://tests/run.gd --fixed-fps 120
+      - name: Match flow and recovery
+        run: Godot_v4.5.1-stable_linux.x86_64 --headless --path . --script res://tests/integration.gd --fixed-fps 120
+      - name: Export review builds
+        run: |
+          Godot_v4.5.1-stable_linux.x86_64 --headless --path . --export-release Web build/web/index.html
+          Godot_v4.5.1-stable_linux.x86_64 --headless --path . --export-release Windows build/windows/TilehBazi.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tileh-offline-review
+          path: |
+            build/web/
+            build/windows/
+          retention-days: 14
+          if-no-files-found: error
