@@ -1,3 +1,7 @@
+## v0.4 controls
+
+The modeled hand and hand settings have been removed. Two contact rings and a circular power gauge now represent the launch gesture. Each human turn begins in placement mode. Tap or drag continuously inside the launch area, then explicitly confirm **Ready to aim**. Releasing a placement drag never shoots. Use **Move marble** to return to placement before firing.
+
 ## v0.3 gameplay revision
 
 Each new match uses a fresh, shared seeded terrain. Shape and resistance stay fixed throughout the match so players can learn and respond to the ground. Use **Move marble**, tap the turquoise launch area, then **Ready to aim** before pulling back to shoot. Placement is optional; the default position still works. Moving does not use a turn.

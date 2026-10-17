@@ -35,7 +35,22 @@ func run() -> void:
 	game.start_match(0)
 	await frames(30)
 	var shots: int=game.rules.total_shots
-	game.toggle_placement()
+	check(game.gesture.placing,"human turn starts in placement mode")
+	game.human_shot(Vector2(0,-1),0.5)
+	check(game.phase=="aim" and game.rules.total_shots==shots,"shooting blocked until placement confirmed")
+	var press:=InputEventMouseButton.new()
+	press.button_index=MOUSE_BUTTON_LEFT
+	press.pressed=true
+	press.position=game.camera.unproject_position(Vector3(-0.20,0,0.84))
+	game.gesture._input(press)
+	var motion:=InputEventMouseMotion.new()
+	motion.position=game.camera.unproject_position(Vector3(-0.40,0,0.84))
+	game.gesture._input(motion)
+	press.pressed=false
+	press.position=motion.position
+	game.gesture._input(press)
+	check(game.gesture.placing and not game.gesture.dragging,"placement drag never switches to power")
+	check(absf(game.shooters[0].position.x+0.40)<0.01,"mouse motion continuously repositions marble")
 	var target:=Vector3(-0.40,0,0.84)
 	game.place_shooter(game.camera.unproject_position(target))
 	await frames(10)

@@ -30,9 +30,15 @@ func _input(event: InputEvent) -> void:
 	if not enabled:
 		return
 	if placing:
-		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed:
+		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT:
+			if event.pressed and touch_id==-1: touch_id=-2; place_requested.emit(event.position)
+			elif not event.pressed and touch_id==-2: touch_id=-1
+		elif event is InputEventMouseMotion and touch_id==-2:
 			place_requested.emit(event.position)
-		elif event is InputEventScreenTouch and event.pressed:
+		elif event is InputEventScreenTouch:
+			if event.pressed and touch_id==-1: touch_id=event.index; place_requested.emit(event.position)
+			elif not event.pressed and event.index==touch_id: touch_id=-1
+		elif event is InputEventScreenDrag and event.index==touch_id:
 			place_requested.emit(event.position)
 		return
 	if event is InputEventScreenTouch:
@@ -53,7 +59,7 @@ func _input(event: InputEvent) -> void:
 		abort()
 
 func begin(pos: Vector2, id: int) -> void:
-	if pos.distance_to(shooter_screen) > 110 or dragging:
+	if placing or not enabled or pos.distance_to(shooter_screen) > 65 or dragging:
 		return
 	origin = pos
 	pointer = pos
@@ -87,13 +93,19 @@ func abort() -> void:
 func _draw() -> void:
 	if not enabled:
 		return
+	if placing:
+		draw_arc(shooter_screen,38,0,TAU,48,Color(0.2,0.9,0.85,0.9),3,true)
+		return
 	var font: Font = get_theme_default_font()
 	if not dragging:
 		draw_arc(shooter_screen,42,0,TAU,48,Color(1,0.95,0.78,0.8),2,true)
 		return
 	var delta: Vector2 = pointer-origin
 	var end: Vector2 = shooter_screen + delta.limit_length(200)
-	draw_line(shooter_screen,end,Color(0.08,0.73,0.78,0.7),12,true)
+	# Two contact rings stand in for the middle-finger support and pulling thumb.
+	draw_arc(shooter_screen,38,0,TAU,48,Color(0.08,0.73,0.78,0.8),3,true)
+	draw_arc(shooter_screen,44,-PI/2,-PI/2+TAU*drag_power(),64,Color(1.0,0.78,0.28),5,true)
+	draw_line(shooter_screen,end,Color(0.08,0.73,0.78,0.35),3,true)
 	draw_circle(end,26,Color(0.1,0.85,0.88,0.4))
 	draw_arc(end,29,0,TAU,32,Color.WHITE,2,true)
 	var direction: Vector2 = -delta.normalized()

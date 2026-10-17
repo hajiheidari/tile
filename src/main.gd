@@ -122,8 +122,6 @@ func setup_world() -> void:
 	art = Art.new()
 	add_child(art)
 	art.build_location(0)
-	art.build_hand(skin,avatar)
-	art.hand_root.visible = false
 	camera = Camera3D.new()
 	add_child(camera)
 	camera.position = AIM_CAMERA
@@ -247,15 +245,6 @@ func setup_ui() -> void:
 	ui.add_child(gesture)
 	gesture.shot.connect(human_shot)
 	gesture.place_requested.connect(place_shooter)
-	gesture.drag_changed.connect(func(power: float):
-		if is_instance_valid(art.thumb):
-			art.thumb.rotation.x = -power*0.4
-			if phase=="aim" and power>0.02 and not shooters.is_empty():
-				var direction: Vector3=direction_from_screen((gesture.origin-gesture.pointer).normalized())
-				art.hand_root.rotation.y=atan2(-direction.x,-direction.z)
-			elif power==0 and phase=="aim":
-				art.hand_root.rotation.y=0
-	)
 	sheet = Control.new()
 	sheet.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	sheet.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -317,7 +306,6 @@ func menu() -> void:
 	phase = "menu"
 	gesture.enabled = false
 	gesture.abort()
-	art.hand_root.visible = false
 	hud.visible = false
 	clear_marbles()
 	new_board(false)
@@ -405,16 +393,6 @@ func settings() -> void:
 			save_preferences()
 		)
 		v.add_child(check)
-	label(v,t("avatar"),22)
-	var hands := HBoxContainer.new()
-	v.add_child(hands)
-	for i in range(2):
-		button(hands,t(["boy","girl"][i]),func(): avatar=i; art.build_hand(skin,avatar); art.hand_root.visible=false; save_preferences(); settings(),avatar==i)
-	label(v,t("skin"),22)
-	var tones := HBoxContainer.new()
-	v.add_child(tones)
-	for i in range(3):
-		button(tones,t("tone"+str(i+1)),func(): skin=i; art.build_hand(skin,avatar); art.hand_root.visible=false; save_preferences(); settings(),skin==i)
 	button(v,t("back"),menu,true)
 
 func clear_marbles() -> void:
@@ -500,15 +478,12 @@ func prepare_turn() -> void:
 		if turn_token != lifecycle:
 			return
 	for marble in marbles: marble.freeze=true
-	art.hand_root.position = Vector3(shooter.position.x,terrain.height(shooter.position.x,shooter.position.z),shooter.position.z)
-	art.hand_root.rotation.y=0
-	art.hand_root.visible = true
-	art.thumb.rotation.x = 0
 	update_hud()
 	gesture.enabled = not (against_ai and player()==1)
 	gesture.power_text = t("power")
 	gesture.cancel_text = t("cancel")
 	gesture.queue_redraw()
+	if not (against_ai and player()==1): toggle_placement()
 	if against_ai and player()==1:
 		var token: int = lifecycle
 		await get_tree().create_timer(0.8).timeout
@@ -611,10 +586,9 @@ func place_shooter(screen: Vector2) -> void:
 	shooter.pending_reset=false
 	shooter.linear_velocity=Vector3.ZERO
 	shooter.angular_velocity=Vector3.ZERO
-	art.hand_root.position=Vector3(pos.x,terrain.height(pos.x,pos.z),pos.z)
 
 func human_shot(vector: Vector2, power: float) -> void:
-	if phase != "aim" or (against_ai and player()==1):
+	if phase != "aim" or gesture.placing or (against_ai and player()==1):
 		return
 	shoot(direction_from_screen(vector),power)
 
@@ -641,29 +615,21 @@ func shoot(direction: Vector3, power: float) -> void:
 	gesture.placing=false
 	if is_instance_valid(launch_outline): launch_outline.visible=false
 	gesture.abort()
-	art.hand_root.rotation.y=atan2(-direction.x,-direction.z)
 	snapshot.clear()
 	for m in marbles:
 		snapshot.append(m.position)
 	var shooter: RigidBody3D = shooters[player()]
 	var speed: float = lerpf(0.2,Rules.MAX_SHOT_SPEED,clampf(power,0,1))
 	var impulse: Vector3 = Vector3(direction.x,0,direction.z).normalized()*speed*shooter.mass
-	var token: int = lifecycle
-	art.shot_animation(func():
-		if token != lifecycle: return
-		for marble in marbles: marble.freeze=false
-		shooter.sleeping=false
-		shooter.apply_central_impulse(impulse)
-		phase="rolling"
-		shot_time=0
-		settling_time=0
-		if haptics and OS.has_feature("mobile"):
-			Input.vibrate_handheld(22)
-		status.text=t("settling")
-	)
-	await get_tree().create_timer(0.3).timeout
-	if token==lifecycle:
-		art.hand_root.visible=false
+	for marble in marbles: marble.freeze=false
+	shooter.sleeping=false
+	shooter.apply_central_impulse(impulse)
+	phase="rolling"
+	shot_time=0
+	settling_time=0
+	if haptics and OS.has_feature("mobile"):
+		Input.vibrate_handheld(22)
+	status.text=t("settling")
 
 func ai_shot() -> void:
 	var shooter: RigidBody3D = shooters[player()]
@@ -858,6 +824,7 @@ func qa_run() -> void:
 	await get_tree().create_timer(1.0).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("res://build/qa-square.png")
+	if gesture.placing: toggle_placement()
 	human_shot(Vector2(0,-1),0.45)
 	await get_tree().create_timer(10).timeout
 	print("QA square phase=",phase," shots=",rules.total_shots)

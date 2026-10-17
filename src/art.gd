@@ -1,8 +1,6 @@
 extends Node3D
 ## Original stylized 3D art; mesh profiles and tile patterns are source controlled.
 const Geo=preload("res://src/geometry.gd")
-var thumb: Node3D
-var hand_root: Node3D
 var landmark: Node3D
 var materials: Dictionary = {}
 
@@ -244,40 +242,3 @@ func grass_border(parent: Node3D) -> void:
 	material.roughness=0.9
 	Geo.instance(parent,st.commit(),material)
 
-func build_hand(tone: int = 1, style: int = 0) -> void:
-	if is_instance_valid(hand_root):
-		hand_root.queue_free()
-	hand_root = Node3D.new()
-	add_child(hand_root)
-	var skin: String = ["f2caa2","c88d60","8d583e"][tone]
-	var skin_mat: StandardMaterial3D = mat(skin,0.57)
-	var palm: Array[Vector3] = [Vector3(0.135,0.080,0.17),Vector3(0.125,0.082,0.13),Vector3(0.111,0.087,0.085),Vector3(0.098,0.082,0.045),Vector3(0.092,0.076,0.026)]
-	var palm_radii: Array[Vector2] = [Vector2(0.023,0.020),Vector2(0.033,0.025),Vector2(0.047,0.029),Vector2(0.046,0.027),Vector2(0.020,0.015)]
-	Geo.instance(hand_root,Geo.tube(palm,palm_radii,24),skin_mat)
-	var wrist: Array[Vector3] = [Vector3(0.136,0.080,0.151),Vector3(0.145,0.083,0.18),Vector3(0.167,0.090,0.235),Vector3(0.185,0.097,0.27),Vector3(0.29,0.12,0.47),Vector3(0.90,0.16,1.15)]
-	var wrist_radii: Array[Vector2] = [Vector2(0.026,0.023),Vector2(0.028,0.024),Vector2(0.032,0.026),Vector2(0.033,0.026),Vector2(0.042,0.033),Vector2(0.048,0.040)]
-	Geo.instance(hand_root,Geo.tube(wrist,wrist_radii,24),mat("266b75" if style==0 else "b67b88",0.9))
-	# A bent middle finger is the ONLY support. Palm and other fingertips stay raised.
-	var middle: Array[Vector3] = [Vector3(0.084,0.081,0.040),Vector3(0.071,0.068,0.010),Vector3(0.060,0.037,0.010),Vector3(0.056,0.013,0.026),Vector3(0.055,0.011,0.039)]
-	var finger_radii: Array[Vector2] = [Vector2(0.013,0.014),Vector2(0.013,0.014),Vector2(0.011,0.012),Vector2(0.009,0.010),Vector2(0.001,0.001)]
-	Geo.instance(hand_root,Geo.tube(middle,finger_radii),skin_mat)
-	for i in range(3):
-		var x: float = 0.104+i*0.020
-		var finger: Array[Vector3] = [Vector3(x,0.084,0.040+i*0.006),Vector3(x+0.002,0.071,0.013+i*0.006),Vector3(x+0.004,0.050,0.020+i*0.006),Vector3(x,0.047,0.043+i*0.006)]
-		var radii: Array[Vector2] = [Vector2(0.010,0.011),Vector2(0.011,0.012),Vector2(0.009,0.010),Vector2(0.001,0.001)]
-		Geo.instance(hand_root,Geo.tube(finger,radii),skin_mat)
-	thumb = Node3D.new()
-	hand_root.add_child(thumb)
-	thumb.position = Vector3(0.074,0.065,0.034)
-	var thumb_points: Array[Vector3] = [Vector3(0.008,0.0,0.006),Vector3(-0.011,-0.002,-0.011),Vector3(-0.033,-0.012,-0.025),Vector3(-0.050,-0.019,-0.035),Vector3(-0.060,-0.023,-0.042)]
-	var thumb_radii: Array[Vector2] = [Vector2(0.019,0.019),Vector2(0.017,0.017),Vector2(0.014,0.014),Vector2(0.012,0.012),Vector2(0.001,0.001)]
-	Geo.instance(thumb,Geo.tube(thumb_points,thumb_radii,20),skin_mat)
-	var nail: MeshInstance3D = ball(thumb,Vector3(-0.047,-0.011,-0.034),Vector3(0.017,0.004,0.020),["f4d7bd","d5ab88","ad7d63"][tone])
-	nail.rotation.z=-0.25
-
-func shot_animation(release: Callable) -> Tween:
-	var tween: Tween = create_tween()
-	tween.tween_property(thumb,"rotation:x",-0.65,0.11)
-	tween.tween_callback(release)
-	tween.tween_property(thumb,"rotation:x",0.45,0.06)
-	return tween

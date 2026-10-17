@@ -1,3 +1,12 @@
+# v0.4 — hand removed; explicit placement confirmation
+
+- Removed the hand geometry, hand animation and hand customization UI from the active project.
+- Human turns start in placement mode; mouse motion and touch drag reposition continuously. Only the confirmation button enters aiming. Gesture-level and controller-level guards reject accidental shots during placement. A smaller 65-pixel aiming hit area prevents distant touches from starting a shot.
+- Placement tests cover default state, blocked shot, continuous drag, no automatic mode transition, bounds/overlap, stationary placement and launch after confirmation.
+- Power is displayed by two circular contact markers and a growing power arc; there is no hand or slingshot graphic.
+
+---
+
 # v0.3 — variable ground and placement (2026-10-17)
 
 - A fresh nonzero seed is generated when starting each new match through the qualifying flow. It remains fixed through that match, shared by both players. There is no random impulse or aim error. Eighteen broad bumps/depressions change mesh vertices and the actual collision surface, with local soil resistance from the same seed. The height offsets are millimetres over 10–26 cm patches, not decorative shader displacement.
