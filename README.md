@@ -4,6 +4,16 @@ An independent Espadna 3D marbles game, built with **Godot 4.5.1 / GDScript / Co
 
 **Current milestone: M1 physical offline prototype, with early M2 features. This is not production art or a finished mobile release.**
 
+### v0.2 — graphics and shot-control revision
+
+- Replaced the old physics solver with built-in Jolt and tuned small-scale contact tolerances/internal-edge handling.
+- Reduced terrain gradients and soft/hard differences. The seven-lane straight-shot regression now caps lateral deviation at 2 cm; the Windows reference maximum is 1.70 cm, versus 24.72 cm in v0.1 under the same scenario.
+- Corrected perspective aiming: diagonal screen guides now match physical shot direction. Improved camera framing leaves room to pull backward.
+- Rebuilt the hand from continuous meshes, grounded its supporting fingertip and aligned the thumb/hand with the chosen shot.
+- Added volume-style glass/refraction, contact shadows, a packed-dirt texture and a detailed distant architectural matte painting integrated with 3D ground, trees, terrace and pool. The distant painting is deliberately 2D, not an authored 3D building model.
+
+This remains a work in progress; these improvements are not a claim that the approved concept's final art quality has been achieved.
+
 ## Play locally
 
 Open `project.godot` in Godot **4.5.1 Standard**, then press F6/F5, or:
@@ -22,8 +32,8 @@ The menu defaults to Persian; English, Arabic and Hindi are available. Settings 
 - Square knockout: six target marbles, physical collisions, complete-line exit collection, one shot per turn, empty-board completion and draws.
 - Real-shaped qualifying hole and paired shots to choose the first player.
 - One-device two-player handoff and labeled offline computer opponent at three heuristic difficulty levels.
-- Uneven collision terrain, stable soft/hard patches, rolling resistance, original synthesized rolling/impact sounds, out-of-bounds and timeout recovery.
-- Replaceable procedural hand, glass shells and colored internal ribbons, native and WebAssembly builds.
+- Gently shaped collision terrain, mild soft/hard patches, rolling resistance, original synthesized rolling/impact sounds, out-of-bounds and timeout recovery.
+- Replaceable continuous-mesh hand, volume-style colored glass, native and WebAssembly builds.
 - Seven destination entries; **only Isfahan dirt is playable in this first slice**. Other landmark blockouts are previews marked as in preparation.
 
 No account, online matchmaking, purchases or advertising SDKs are installed. The online entry is explicitly marked as future work.
@@ -34,6 +44,7 @@ No account, online matchmaking, purchases or advertising SDKs are installed. The
 godot --headless --editor --path . --import --quit
 godot --headless --path . --script res://tests/run.gd --fixed-fps 120
 godot --headless --path . --script res://tests/integration.gd --fixed-fps 120
+godot --headless --path . --script res://tests/control.gd --fixed-fps 120
 ```
 
 The first suite uses real rigid-body simulation, not only mocked coordinates. The integration suite runs the actual gameplay controller through shots, recovery, handoff, the qualifying hole, a wall match and AI turns. See `docs/VALIDATION.md` for observed results and limitations.

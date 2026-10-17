@@ -10,6 +10,8 @@ const COUNTRIES: Array[String] = ["iran","afghanistan","tajikistan","china","dub
 const CREAM := Color("fff3d9")
 const INK := Color("184c50")
 const TEAL := Color("197980")
+const AIM_CAMERA := Vector3(0,0.70,2.50)
+const AIM_TARGET := Vector3(0,0.05,-0.50)
 var rules = Rules.new()
 var loc = Locale.new()
 var art: Node3D
@@ -93,23 +95,25 @@ func setup_world() -> void:
 	env.background_mode = Environment.BG_SKY
 	var sky := Sky.new()
 	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color("56b8e1")
-	sky_mat.sky_horizon_color = Color("e0edd6")
+	sky_mat.sky_top_color = Color("69b6d8")
+	sky_mat.sky_horizon_color = Color("b6d9e6")
 	sky_mat.ground_bottom_color = Color("b28b64")
 	sky_mat.ground_horizon_color = Color("e0edd6")
 	sky.sky_material = sky_mat
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("d7e3e8")
-	env.ambient_light_energy = 0.38
+	env.ambient_light_color = Color("c3d7e4")
+	env.ambient_light_energy = 0.28
 	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
 	world_environment.environment = env
 	add_child(world_environment)
 	sun = DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-43,-32,0)
-	sun.light_color = Color("fff2de")
-	sun.light_energy = 0.78
+	sun.light_color = Color("ffe4bc")
+	sun.light_energy = 0.62
 	sun.shadow_enabled = not low_quality
+	sun.shadow_opacity=0.62
+	sun.shadow_blur=1.5
 	sun.directional_shadow_max_distance = 14
 	add_child(sun)
 	art = Art.new()
@@ -119,9 +123,9 @@ func setup_world() -> void:
 	art.hand_root.visible = false
 	camera = Camera3D.new()
 	add_child(camera)
-	camera.position = Vector3(0,0.95,2.15)
-	camera.look_at(Vector3(0,0.20,-0.45))
-	camera.fov = 51
+	camera.position = AIM_CAMERA
+	camera.look_at(AIM_TARGET)
+	camera.fov = 56
 	camera.near = 0.02
 	camera.far = 40
 	sound = Sound.new()
@@ -130,6 +134,7 @@ func setup_world() -> void:
 	if cfg.load("user://settings.cfg") == OK:
 		sound.enabled = cfg.get_value("settings","sound",true)
 	new_board(false)
+	get_viewport().msaa_3d=Viewport.MSAA_DISABLED if low_quality else Viewport.MSAA_2X
 
 func new_board(for_qualifier: bool) -> void:
 	if is_instance_valid(board):
@@ -141,10 +146,10 @@ func new_board(for_qualifier: bool) -> void:
 	terrain.qualifying = for_qualifier
 	board.add_child(terrain)
 	# Visible boundary: a playing rule, not an invisible collision wall.
-	line(Vector3(-1.16,0,1.40),Vector3(1.16,0,1.40),0.007,"e9cf99")
-	line(Vector3(-1.16,0,-1.40),Vector3(-1.16,0,1.40),0.007,"e9cf99")
-	line(Vector3(1.16,0,-1.40),Vector3(1.16,0,1.40),0.007,"e9cf99")
-	line(Vector3(-1.16,0,-1.40),Vector3(1.16,0,-1.40),0.007,"e9cf99")
+	line(Vector3(-1.16,0,1.40),Vector3(1.16,0,1.40),0.003,"b98b5d")
+	line(Vector3(-1.16,0,-1.40),Vector3(-1.16,0,1.40),0.003,"b98b5d")
+	line(Vector3(1.16,0,-1.40),Vector3(1.16,0,1.40),0.003,"b98b5d")
+	line(Vector3(-1.16,0,-1.40),Vector3(1.16,0,-1.40),0.003,"b98b5d")
 	if for_qualifier:
 		for i in range(48):
 			var a: float = i*TAU/48
@@ -239,6 +244,11 @@ func setup_ui() -> void:
 	gesture.drag_changed.connect(func(power: float):
 		if is_instance_valid(art.thumb):
 			art.thumb.rotation.x = -power*0.4
+			if phase=="aim" and power>0.02 and not shooters.is_empty():
+				var direction: Vector3=direction_from_screen((gesture.origin-gesture.pointer).normalized())
+				art.hand_root.rotation.y=atan2(-direction.x,-direction.z)
+			elif power==0 and phase=="aim":
+				art.hand_root.rotation.y=0
 	)
 	sheet = Control.new()
 	sheet.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -385,6 +395,7 @@ func settings() -> void:
 			if key == "sound": sound.enabled=value
 			else: set(key,value)
 			sun.shadow_enabled = not low_quality
+			get_viewport().msaa_3d=Viewport.MSAA_DISABLED if low_quality else Viewport.MSAA_2X
 			save_preferences()
 		)
 		v.add_child(check)
@@ -463,8 +474,8 @@ func prepare_turn() -> void:
 		match_result()
 		return
 	clear_sheet()
-	camera.position=Vector3(0,0.95,2.15)
-	camera.look_at(Vector3(0,0.20,-0.45))
+	camera.position=AIM_CAMERA
+	camera.look_at(AIM_TARGET)
 	phase = "aim"
 	settling_time = 0
 	shot_time = 0
@@ -479,7 +490,8 @@ func prepare_turn() -> void:
 		if turn_token != lifecycle:
 			return
 	shooter.freeze = false
-	art.hand_root.position = shooter.position
+	art.hand_root.position = Vector3(shooter.position.x,terrain.height(shooter.position.x,shooter.position.z),shooter.position.z)
+	art.hand_root.rotation.y=0
 	art.hand_root.visible = true
 	art.thumb.rotation.x = 0
 	update_hud()
@@ -503,37 +515,50 @@ func update_hud() -> void:
 	top.offset_left=20
 	top.offset_right=-20
 	top.offset_top=22
-	top.add_theme_stylebox_override("panel",panel_style())
+	var top_style: StyleBoxFlat=panel_style(Color(1.0,0.953,0.85,0.96))
+	top_style.content_margin_top=5
+	top_style.content_margin_bottom=5
+	top.add_theme_stylebox_override("panel",top_style)
 	hud.add_child(top)
 	var v: VBoxContainer = vertical(top,2)
-	label(v,t("qualifier") if qualifier else t(selected_mode),26)
-	score_label = label(v,player_name(0)+"   "+str(rules.scores[0])+"      :      "+str(rules.scores[1])+"   "+player_name(1),22)
+	label(v,t("qualifier") if qualifier else t(selected_mode),22)
+	score_label = label(v,player_name(0)+"   "+str(rules.scores[0])+"      :      "+str(rules.scores[1])+"   "+player_name(1),21)
 	if not qualifier and selected_mode=="wall":
 		label(v,t("round")+" "+str(rules.round_number)+" / 5",17)
-	label(v,t("turn")+" · "+player_name(player()),19)
+	label(v,t("turn")+" · "+player_name(player()),16)
 	var pause_button: Button = button(hud,"II",pause_game)
-	pause_button.position = Vector2(640,210)
+	pause_button.position = Vector2(640,155)
 	pause_button.size = Vector2(60,64)
-	status = Label.new()
-	status.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	status.offset_left=24
-	status.offset_right=-24
-	status.offset_top=-105
-	status.offset_bottom=-28
-	status.text=t("aim")
-	status.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	var status_bg:=PanelContainer.new()
+	status_bg.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	status_bg.offset_left=24
+	status_bg.offset_right=-24
+	status_bg.offset_top=-88
+	status_bg.offset_bottom=-24
+	status_bg.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	status_bg.add_theme_stylebox_override("panel",panel_style(Color(0.07,0.25,0.27,0.90),Color(0.25,0.49,0.49,0.5)))
+	hud.add_child(status_bg)
+	status=label(status_bg,t("aim"),18)
 	status.add_theme_color_override("font_color",CREAM)
-	status.add_theme_color_override("font_shadow_color",Color("503d2b"))
-	status.add_theme_constant_override("shadow_offset_x",1)
-	status.add_theme_constant_override("shadow_offset_y",2)
-	hud.add_child(status)
 
 func human_shot(vector: Vector2, power: float) -> void:
 	if phase != "aim" or (against_ai and player()==1):
 		return
-	# Screen x/y map to ground x/z; pulling down launches toward the scene.
-	shoot(Vector3(vector.x,0,vector.y).normalized(),power)
+	shoot(direction_from_screen(vector),power)
+
+func direction_from_screen(vector: Vector2) -> Vector3:
+	# The visible guide is in screen space. Unproject it onto the launch plane so
+	# diagonal shots follow the guide even with a low, perspective aiming camera.
+	var shooter: RigidBody3D=shooters[player()]
+	var screen_start: Vector2=camera.unproject_position(shooter.global_position)
+	var screen_target: Vector2=screen_start+vector.normalized()*150.0
+	var plane:=Plane(Vector3.UP,shooter.global_position.y)
+	var intersection: Variant=plane.intersects_ray(camera.project_ray_origin(screen_target),camera.project_ray_normal(screen_target))
+	if intersection is Vector3:
+		var direction: Vector3=intersection-shooter.global_position
+		direction.y=0
+		return direction.normalized()
+	return Vector3(vector.x,0,vector.y).normalized()
 
 func shoot(direction: Vector3, power: float) -> void:
 	if phase != "aim" or not is_finite(power) or not direction.is_finite():
@@ -541,6 +566,7 @@ func shoot(direction: Vector3, power: float) -> void:
 	phase = "release"
 	gesture.enabled=false
 	gesture.abort()
+	art.hand_root.rotation.y=atan2(-direction.x,-direction.z)
 	snapshot.clear()
 	for m in marbles:
 		snapshot.append(m.position)
@@ -589,7 +615,8 @@ func ai_shot() -> void:
 	for i in range(samples):
 		var pos: Vector3 = shooter.position.lerp(target,float(i)/samples)
 		resistance += 0.34*Terrain.softness_at(pos.x,pos.z)/samples
-	var speed: float = sqrt(2.0*resistance*distance)*1.14
+	var rolling_compensation: float=1.14 if not qualifier and selected_mode=="square" else 1.50
+	var speed: float = sqrt(2.0*resistance*distance)*rolling_compensation
 	if not qualifier and selected_mode=="square":
 		speed += [0.4,0.7,0.95][difficulty]
 	var error: float = [0.15,0.055,0.018][difficulty]

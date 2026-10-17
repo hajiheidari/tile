@@ -32,6 +32,11 @@ func run() -> void:
 	game.start_match(0)
 	await frames(30)
 	check(game.phase=="aim","square match enters aiming state")
+	for direction in [Vector2(1,-1).normalized(),Vector2(-1,-1).normalized(),Vector2(0,-1),Vector2(1,0)]:
+		var origin: Vector3=game.shooters[0].global_position
+		var world_direction: Vector3=game.direction_from_screen(direction)
+		var projected: Vector2=(game.camera.unproject_position(origin+world_direction*0.10)-game.camera.unproject_position(origin)).normalized()
+		check(projected.dot(direction)>0.995,"physical aiming matches the screen guide: "+str(direction))
 	game.human_shot(Vector2(0,-1),0.40)
 	await wait_for_shot()
 	check(game.rules.total_shots==1 and game.rules.current==1,"real square shot settles and passes turn to opponent")

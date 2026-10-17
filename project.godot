@@ -23,8 +23,12 @@ environment/defaults/default_clear_color=Color(0.48, 0.76, 0.90, 1)
 
 [physics]
 common/physics_ticks_per_second=120
-3d/physics_engine="GodotPhysics3D"
+3d/physics_engine="Jolt Physics"
 3d/default_gravity=9.81
+jolt_physics_3d/simulation/use_enhanced_internal_edge_removal=true
+jolt_physics_3d/simulation/penetration_slop=0.0005
+jolt_physics_3d/simulation/speculative_contact_distance=0.002
+jolt_physics_3d/simulation/bounce_velocity_threshold=0.2
 
 [gui]
 theme/default_font_multichannel_signed_distance_field=true

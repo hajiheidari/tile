@@ -9,6 +9,7 @@ var tint: Color = Color("14b7ce")
 var last_speed: float = 0.0
 var reset_position: Vector3
 var pending_reset: bool = false
+var contact_shadow: MeshInstance3D
 
 func _ready() -> void:
 	mass = 0.02
@@ -31,41 +32,31 @@ func _ready() -> void:
 	var mesh := SphereMesh.new()
 	mesh.radius = Rules.RADIUS
 	mesh.height = Rules.RADIUS * 2
-	mesh.radial_segments = 32
-	mesh.rings = 16
+	mesh.radial_segments = 48
+	mesh.rings = 24
 	var visual := MeshInstance3D.new()
 	visual.mesh = mesh
-	var glass := StandardMaterial3D.new()
-	glass.albedo_color = Color(tint.r, tint.g, tint.b, 0.42)
-	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	glass.roughness = 0.09
-	glass.metallic = 0.18
-	glass.rim_enabled = true
-	glass.rim = 0.8
-	glass.clearcoat_enabled = true
-	glass.clearcoat = 1.0
+	var glass := ShaderMaterial.new()
+	glass.shader=load("res://assets/shaders/marble.gdshader")
+	glass.set_shader_parameter("tint",tint)
 	visual.material_override = glass
 	add_child(visual)
-	# Original procedural inner swirls, not a flat opaque ball texture.
-	for strand in range(3):
-		var path := SurfaceTool.new()
-		path.begin(Mesh.PRIMITIVE_TRIANGLE_STRIP)
-		for i in range(25):
-			var t: float = float(i) / 24.0
-			var a: float = t * TAU * 1.15 + strand * TAU / 3.0
-			var radial: float = sin(t * PI) * Rules.RADIUS * 0.72
-			var pos := Vector3(cos(a)*radial, (t-0.5)*Rules.RADIUS*1.65, sin(a)*radial)
-			path.add_vertex(pos + Vector3(0.004, 0, 0))
-			path.add_vertex(pos - Vector3(0.004, 0, 0))
-		var ribbon := MeshInstance3D.new()
-		ribbon.mesh = path.commit()
-		var ribbon_mat := StandardMaterial3D.new()
-		ribbon_mat.albedo_color = tint if strand != 1 else Color("fff2ce")
-		ribbon_mat.roughness = 0.2
-		ribbon_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-		ribbon.material_override = ribbon_mat
-		add_child(ribbon)
+	contact_shadow=MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size=Vector2.ONE*Rules.RADIUS*3.6
+	contact_shadow.mesh=plane
+	var shadow_material := ShaderMaterial.new()
+	shadow_material.shader=load("res://assets/shaders/contact.gdshader")
+	contact_shadow.material_override=shadow_material
+	contact_shadow.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(contact_shadow)
+	contact_shadow.top_level=true
 	body_entered.connect(func(_body: Node): impact.emit(last_speed))
+
+func _process(_dt: float) -> void:
+	if is_instance_valid(contact_shadow):
+		contact_shadow.global_position=Vector3(global_position.x,Terrain.height_at(global_position.x,global_position.z)+0.0008,global_position.z)
+		contact_shadow.visible=global_position.y>0.012 and global_position.y<0.065
 
 func teleport(pos: Vector3) -> void:
 	reset_position = pos

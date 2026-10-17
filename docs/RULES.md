@@ -1,4 +1,4 @@
-# Rules — offline-v1
+# Rules — offline-v2
 
 Owner-approved launch scope is **Wall precision and Square knockout only**. Triangle, hole course and the uncertain two-marble collection variant are deferred. Do not reintroduce coin toss or rock-paper-scissors.
 
@@ -38,4 +38,4 @@ A successful shot still passes the turn. Empty square ends the match; most colle
 
 ## Surfaces and locations
 
-The first playable map is handcrafted `isfahan-dirt-v1`: shallow waves, low ruts, a gentle cross-slope, visible darker soft patch on the left, harder patch on the right. Identical conditions apply to both participants. Other six locations are registered previews and cannot start a match in this milestone.
+The first playable map is handcrafted `isfahan-packed-dirt-v2`: a packed, gently shaped patch with a maximum analytic gradient around 0.065 degrees. Terrain affects control subtly: the soft patch increases modeled rolling resistance by at most 12%, and the hard patch reduces it by at most 6%. The launch regression measures physical lateral drift across seven lanes and requires each to remain within 2 cm. Visual fine-grain texture is surface detail, not a collection of large hidden bumps. The qualifying bowl remains a real depression. Identical conditions apply to both participants. Other six locations are registered previews and cannot start a match in this milestone.

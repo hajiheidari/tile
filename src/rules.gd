@@ -7,8 +7,8 @@ const TIE_TOLERANCE: float = 0.002
 const WALL_Z: float = -1.0
 const SQUARE_HALF: float = 0.32
 const MAX_SHOT_SPEED: float = 3.3
-const TERRAIN_VERSION: String = "isfahan-dirt-v1"
-const MATCH_VERSION: String = "offline-v1"
+const TERRAIN_VERSION: String = "isfahan-packed-dirt-v2"
+const MATCH_VERSION: String = "offline-v2"
 
 var mode: String = "square"
 var scores: Array[int] = [0, 0]

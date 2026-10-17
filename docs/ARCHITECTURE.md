@@ -2,7 +2,9 @@
 
 ## Engine decision
 
-Godot **4.5.1 Standard**, GDScript, built-in GodotPhysics3D, 120 Hz physics and the Compatibility renderer. A real 3D engine supplies contact solving, sphere collisions, mesh collision, articulated transforms and native platform exports. Compatibility also supports the browser's WebGL 2 renderer. We deliberately avoid C# because Godot 4's standard web export is not the .NET path.
+Godot **4.5.1 Standard**, GDScript, built-in **Jolt Physics**, 120 Hz physics and the Compatibility renderer. A real 3D engine supplies contact solving, sphere collisions, mesh collision, articulated transforms and native platform exports. Compatibility also supports the browser's WebGL 2 renderer. We deliberately avoid C# because Godot 4's standard web export is not the .NET path.
+
+v0.1 used GodotPhysics3D. User playtesting exposed excessive lateral deflection. v0.2 uses Jolt's enhanced internal-edge removal, small-marble contact tolerances and a much gentler heightfield. This is a solver/terrain correction, not an invisible post-release steering correction. The old baseline's seven-lane maximum was 24.72 cm; the revised Windows run was 1.70 cm. The two solvers are not assumed to produce interchangeable trajectories.
 
 Godot was absent from PATH at audit time. Its official Windows binary and matching export templates were obtained from Godot's official distribution, then actually used. The detected machine has Intel HD Graphics 4600; Godot selected ANGLE due to the driver's OpenGL limitations. No Unity, Android SDK, adb, JDK or .NET toolchain was detected on PATH.
 
@@ -21,8 +23,8 @@ Repository secret values were not requested or printed. Their existence does not
 - `rules.gd`: pure state, match totals, exclusive scoring, full-line collection.
 - `terrain.gd`: versioned analytic heightfield, triangulated once for both visible mesh and static collision; qualifier adds a physical bowl.
 - `marble.gd`: common legal physics body, impulse, contact sound, rolling resistance and safe reset in `_integrate_forces`.
-- `gesture.gd`: one-pointer drag/release, maximum power, cancellation and no shot outside the shooter hit area.
-- `art.gd`: replaceable original procedural landmark and hand blockouts. No physics parameters depend on cosmetics.
+- `gesture.gd`: one-pointer drag/release, maximum power, cancellation and no shot outside the shooter hit area. The controller unprojects its screen guide onto the launch plane so perspective diagonals remain accurate.
+- `art.gd` / `geometry.gd`: original continuous hand meshes, decorative meshes and a distant landmark matte painting. The matte is a flat image behind the actual 3D playable environment; no physics parameters depend on cosmetics.
 - `locale.gd`: four languages and explicit RTL flag, bundled OFL fonts.
 - `main.gd`: local lifecycle, tutorial cards, qualifier, handoff, AI planning and results. Async lifecycle tokens prevent an old shot callback from mutating a new match.
 

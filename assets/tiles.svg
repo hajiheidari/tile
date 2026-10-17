@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#155268"/>
+<g fill="none" stroke="#52acb0" stroke-width="5"><path d="M0 0L256 256 512 0M0 512L256 256 512 512M0 256L256 0 512 256 256 512Z"/><path d="M0 128Q128 128 128 0M384 0Q384 128 512 128M512 384Q384 384 384 512M128 512Q128 384 0 384"/></g>
+<path d="M256 72L301 146 384 128 366 211 440 256 366 301 384 384 301 366 256 440 211 366 128 384 146 301 72 256 146 211 128 128 211 146Z" fill="#2e969f" stroke="#e2be74" stroke-width="7"/>
+<path d="M256 137L284 201 355 157 311 228 375 256 311 284 355 355 284 311 256 375 228 311 157 355 201 284 137 256 201 228 157 157 228 201Z" fill="#184a6b" stroke="#e2be74" stroke-width="4"/>
+<g fill="#e8d8a4"><ellipse cx="256" cy="207" rx="12" ry="28"/><ellipse cx="256" cy="305" rx="12" ry="28"/><ellipse cx="207" cy="256" rx="28" ry="12"/><ellipse cx="305" cy="256" rx="28" ry="12"/></g><circle cx="256" cy="256" r="19" fill="#b18b42"/><circle cx="256" cy="256" r="9" fill="#4eb4b6"/>
+<g fill="#c9a95f"><circle cx="0" cy="0" r="21"/><circle cx="512" cy="0" r="21"/><circle cx="0" cy="512" r="21"/><circle cx="512" cy="512" r="21"/></g></svg>
