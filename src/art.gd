@@ -253,7 +253,7 @@ func build_hand(tone: int = 1, style: int = 0) -> void:
 	var palm: Array[Vector3] = [Vector3(0.135,0.080,0.17),Vector3(0.125,0.082,0.13),Vector3(0.111,0.087,0.085),Vector3(0.098,0.082,0.045),Vector3(0.092,0.076,0.026)]
 	var palm_radii: Array[Vector2] = [Vector2(0.023,0.020),Vector2(0.033,0.025),Vector2(0.047,0.029),Vector2(0.046,0.027),Vector2(0.020,0.015)]
 	Geo.instance(hand_root,Geo.tube(palm,palm_radii,24),skin_mat)
-	var wrist: Array[Vector3] = [Vector3(0.136,0.080,0.151),Vector3(0.145,0.083,0.18),Vector3(0.167,0.090,0.235),Vector3(0.185,0.097,0.27),Vector3(0.29,0.12,0.47),Vector3(0.60,0.16,0.86)]
+	var wrist: Array[Vector3] = [Vector3(0.136,0.080,0.151),Vector3(0.145,0.083,0.18),Vector3(0.167,0.090,0.235),Vector3(0.185,0.097,0.27),Vector3(0.29,0.12,0.47),Vector3(0.90,0.16,1.15)]
 	var wrist_radii: Array[Vector2] = [Vector2(0.026,0.023),Vector2(0.028,0.024),Vector2(0.032,0.026),Vector2(0.033,0.026),Vector2(0.042,0.033),Vector2(0.048,0.040)]
 	Geo.instance(hand_root,Geo.tube(wrist,wrist_radii,24),mat("266b75" if style==0 else "b67b88",0.9))
 	# A bent middle finger is the ONLY support. Palm and other fingertips stay raised.
