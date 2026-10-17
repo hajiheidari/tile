@@ -236,6 +236,7 @@ func setup_ui() -> void:
 	theme.set_color("font_color","Button",INK)
 	theme.set_color("font_hover_color","Button",INK)
 	theme.set_color("font_pressed_color","Button",INK)
+	theme.set_color("font_focus_color","Button",INK)
 	ui.theme = theme
 	canvas.add_child(ui)
 	hud = Control.new()
@@ -548,8 +549,8 @@ func update_hud() -> void:
 	status_bg.add_theme_stylebox_override("panel",panel_style(Color(0.07,0.25,0.27,0.90),Color(0.25,0.49,0.49,0.5)))
 	hud.add_child(status_bg)
 	placement_button=button(hud,t("place"),toggle_placement)
-	placement_button.position=Vector2(225,1055)
-	placement_button.size=Vector2(270,48)
+	placement_button.position=Vector2(200,1035)
+	placement_button.size=Vector2(320,64)
 	placement_button.visible=not(against_ai and player()==1)
 	status=label(status_bg,t("aim"),18)
 	status.add_theme_color_override("font_color",CREAM)
@@ -635,6 +636,7 @@ func shoot(direction: Vector3, power: float) -> void:
 	if phase != "aim" or not is_finite(power) or not direction.is_finite():
 		return
 	phase = "release"
+	placement_button.visible=false
 	gesture.enabled=false
 	gesture.placing=false
 	if is_instance_valid(launch_outline): launch_outline.visible=false
