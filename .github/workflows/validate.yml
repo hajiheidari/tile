@@ -31,6 +31,10 @@ jobs:
         run: Godot_v4.5.1-stable_linux.x86_64 --headless --path . --script res://tests/run.gd --fixed-fps 120
       - name: Match flow and recovery
         run: Godot_v4.5.1-stable_linux.x86_64 --headless --path . --script res://tests/integration.gd --fixed-fps 120
+      - name: Placement and seeded ground
+        run: |
+          Godot_v4.5.1-stable_linux.x86_64 --headless --path . --script res://tests/placement.gd --fixed-fps 120
+          Godot_v4.5.1-stable_linux.x86_64 --headless --path . --script res://tests/variation.gd --fixed-fps 120
       - name: Direct-shot control regression across seven lanes
         run: Godot_v4.5.1-stable_linux.x86_64 --headless --path . --script res://tests/control.gd --fixed-fps 120
       - name: Export review builds

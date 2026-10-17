@@ -6,6 +6,7 @@ var marble_id: int = -1
 var is_target: bool = false
 var surface_multiplier: float = 1.0
 var tint: Color = Color("14b7ce")
+var ground: StaticBody3D
 var last_speed: float = 0.0
 var reset_position: Vector3
 var pending_reset: bool = false
@@ -55,7 +56,7 @@ func _ready() -> void:
 
 func _process(_dt: float) -> void:
 	if is_instance_valid(contact_shadow):
-		contact_shadow.global_position=Vector3(global_position.x,Terrain.height_at(global_position.x,global_position.z)+0.0008,global_position.z)
+		contact_shadow.global_position=Vector3(global_position.x,(ground.height(global_position.x,global_position.z) if is_instance_valid(ground) else Terrain.height_at(global_position.x,global_position.z))+0.0008,global_position.z)
 		contact_shadow.visible=global_position.y>0.012 and global_position.y<0.065
 
 func teleport(pos: Vector3) -> void:
@@ -72,7 +73,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	last_speed = state.linear_velocity.length()
 	if state.get_contact_count() > 0:
 		var pos: Vector3 = state.transform.origin
-		var resistance: float = 0.34 * Terrain.softness_at(pos.x, pos.z) * surface_multiplier
+		var resistance: float = 0.34 * (ground.softness(pos.x,pos.z) if is_instance_valid(ground) else Terrain.softness_at(pos.x,pos.z)) * surface_multiplier
 		# Rolling resistance opposes velocity only; slopes and impacts use the solver.
 		var flat := Vector3(state.linear_velocity.x, 0, state.linear_velocity.z)
 		if flat.length() > 0.001:

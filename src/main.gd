@@ -44,6 +44,9 @@ var qualifier: bool = true
 var qualifier_player: int = 0
 var qualifier_shots: int = 0
 var first_player: int = 0
+var placement_button: Button
+var launch_outline: Node3D
+var match_seed: int = 0
 var settling_time: float = 0.0
 var shot_time: float = 0.0
 var snapshot: Array[Vector3] = []
@@ -144,6 +147,7 @@ func new_board(for_qualifier: bool) -> void:
 	add_child(board)
 	terrain = Terrain.new()
 	terrain.qualifying = for_qualifier
+	terrain.configure(match_seed)
 	board.add_child(terrain)
 	# Visible boundary: a playing rule, not an invisible collision wall.
 	line(Vector3(-1.16,0,1.40),Vector3(1.16,0,1.40),0.003,"b98b5d")
@@ -241,6 +245,7 @@ func setup_ui() -> void:
 	gesture = Gesture.new()
 	ui.add_child(gesture)
 	gesture.shot.connect(human_shot)
+	gesture.place_requested.connect(place_shooter)
 	gesture.drag_changed.connect(func(power: float):
 		if is_instance_valid(art.thumb):
 			art.thumb.rotation.x = -power*0.4
@@ -421,6 +426,7 @@ func clear_marbles() -> void:
 
 func spawn(pos: Vector3, color: Color, id: int = -1) -> RigidBody3D:
 	var marble = Marble.new()
+	marble.ground = terrain
 	marble.tint = color
 	marble.marble_id = id
 	marble.is_target = id >= 0
@@ -436,6 +442,7 @@ func spawn_shooters(z: float) -> void:
 	# Both marbles remain dynamic: even an opponent waiting for a turn can be displaced.
 
 func start_qualifier() -> void:
+	match_seed = randi_range(1,2147483646)
 	lifecycle += 1
 	rules.start(selected_mode,first_player)
 	qualifier = true
@@ -451,6 +458,7 @@ func start_qualifier() -> void:
 	button(v,t("ready"),prepare_turn,true)
 
 func start_match(first: int) -> void:
+	if match_seed == 0: match_seed = randi_range(1,2147483646)
 	qualifier = false
 	hud.visible = true
 	rules.start(selected_mode,first)
@@ -477,6 +485,7 @@ func prepare_turn() -> void:
 	camera.position=AIM_CAMERA
 	camera.look_at(AIM_TARGET)
 	phase = "aim"
+	gesture.placing=false
 	settling_time = 0
 	shot_time = 0
 	var shooter: RigidBody3D = shooters[player()]
@@ -489,7 +498,7 @@ func prepare_turn() -> void:
 		await get_tree().physics_frame
 		if turn_token != lifecycle:
 			return
-	shooter.freeze = false
+	for marble in marbles: marble.freeze=true
 	art.hand_root.position = Vector3(shooter.position.x,terrain.height(shooter.position.x,shooter.position.z),shooter.position.z)
 	art.hand_root.rotation.y=0
 	art.hand_root.visible = true
@@ -538,8 +547,70 @@ func update_hud() -> void:
 	status_bg.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	status_bg.add_theme_stylebox_override("panel",panel_style(Color(0.07,0.25,0.27,0.90),Color(0.25,0.49,0.49,0.5)))
 	hud.add_child(status_bg)
+	placement_button=button(hud,t("place"),toggle_placement)
+	placement_button.position=Vector2(225,1055)
+	placement_button.size=Vector2(270,48)
+	placement_button.visible=not(against_ai and player()==1)
 	status=label(status_bg,t("aim"),18)
 	status.add_theme_color_override("font_color",CREAM)
+
+func launch_bounds() -> Rect2:
+	return Rect2(-0.65,0.48 if qualifier else 0.72,1.30,0.04 if qualifier else 0.35)
+
+func toggle_placement() -> void:
+	if phase!="aim": return
+	gesture.abort()
+	gesture.placing=not gesture.placing
+	placement_button.text=t("done_place") if gesture.placing else t("place")
+	status.text=t("place_help") if gesture.placing else t("aim")
+	if is_instance_valid(launch_outline): launch_outline.queue_free()
+	launch_outline=Node3D.new()
+	board.add_child(launch_outline)
+	var bounds: Rect2=launch_bounds()
+	var corners: Array[Vector2]=[bounds.position,Vector2(bounds.end.x,bounds.position.y),bounds.end,Vector2(bounds.position.x,bounds.end.y)]
+	for i in range(4):
+		var a: Vector2=corners[i]
+		var b: Vector2=corners[(i+1)%4]
+		for j in range(20):
+			var u: Vector2=a.lerp(b,float(j)/20)
+			var v: Vector2=a.lerp(b,float(j+1)/20)
+			var segment:=MeshInstance3D.new()
+			var mesh:=CylinderMesh.new()
+			mesh.top_radius=0.002
+			mesh.bottom_radius=0.002
+			var start:=Vector3(u.x,terrain.height(u.x,u.y)+0.003,u.y)
+			var end:=Vector3(v.x,terrain.height(v.x,v.y)+0.003,v.y)
+			mesh.height=start.distance_to(end)
+			segment.mesh=mesh
+			segment.position=(start+end)/2
+			segment.quaternion=Quaternion(Vector3.UP,(end-start).normalized())
+			var material:=StandardMaterial3D.new()
+			material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+			material.albedo_color=Color("5de5d5")
+			segment.material_override=material
+			launch_outline.add_child(segment)
+	launch_outline.visible=gesture.placing
+
+func place_shooter(screen: Vector2) -> void:
+	if phase!="aim" or not gesture.placing or (against_ai and player()==1): return
+	var hit: Variant=Plane(Vector3.UP,0).intersects_ray(camera.project_ray_origin(screen),camera.project_ray_normal(screen))
+	if not hit is Vector3: return
+	var point: Vector2=Vector2(hit.x,hit.z)
+	# The qualifying line is narrow: accept a finger-sized hit zone and snap
+	# back to the one-metre line so placement cannot shorten the attempt.
+	if qualifier and absf(point.y-0.5)<0.12: point.y=0.5
+	if not launch_bounds().has_point(point): return
+	var pos:=Vector3(point.x,terrain.height(point.x,point.y)+Rules.RADIUS+0.002,point.y)
+	for marble in marbles:
+		if marble!=shooters[player()] and marble.position.distance_to(pos)<Rules.RADIUS*2.2: return
+	var shooter: RigidBody3D=shooters[player()]
+	shooter.freeze=true
+	shooter.position=pos
+	shooter.reset_position=pos
+	shooter.pending_reset=false
+	shooter.linear_velocity=Vector3.ZERO
+	shooter.angular_velocity=Vector3.ZERO
+	art.hand_root.position=Vector3(pos.x,terrain.height(pos.x,pos.z),pos.z)
 
 func human_shot(vector: Vector2, power: float) -> void:
 	if phase != "aim" or (against_ai and player()==1):
@@ -565,6 +636,8 @@ func shoot(direction: Vector3, power: float) -> void:
 		return
 	phase = "release"
 	gesture.enabled=false
+	gesture.placing=false
+	if is_instance_valid(launch_outline): launch_outline.visible=false
 	gesture.abort()
 	art.hand_root.rotation.y=atan2(-direction.x,-direction.z)
 	snapshot.clear()
@@ -576,6 +649,7 @@ func shoot(direction: Vector3, power: float) -> void:
 	var token: int = lifecycle
 	art.shot_animation(func():
 		if token != lifecycle: return
+		for marble in marbles: marble.freeze=false
 		shooter.sleeping=false
 		shooter.apply_central_impulse(impulse)
 		phase="rolling"
@@ -614,7 +688,7 @@ func ai_shot() -> void:
 	var samples: int = [4,12,24][difficulty]
 	for i in range(samples):
 		var pos: Vector3 = shooter.position.lerp(target,float(i)/samples)
-		resistance += 0.34*Terrain.softness_at(pos.x,pos.z)/samples
+		resistance += 0.34*terrain.softness(pos.x,pos.z)/samples
 	var rolling_compensation: float=1.14 if not qualifier and selected_mode=="square" else 1.50
 	var speed: float = sqrt(2.0*resistance*distance)*rolling_compensation
 	if not qualifier and selected_mode=="square":

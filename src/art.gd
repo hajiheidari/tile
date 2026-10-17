@@ -159,6 +159,7 @@ func build_location(index: int) -> void:
 	var earth_material := ShaderMaterial.new()
 	earth_material.shader=load("res://assets/shaders/earth.gdshader")
 	earth_material.set_shader_parameter("soil_tex",load("res://assets/packed-dirt.png"))
+	earth_material.set_shader_parameter("background_ground",true)
 	Geo.instance(landmark,earth,earth_material,Vector3(0,-0.012,0))
 	match index:
 		0:

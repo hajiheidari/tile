@@ -1,4 +1,6 @@
 extends Control
+signal place_requested(screen: Vector2)
+var placing: bool = false
 signal shot(vector: Vector2, power: float)
 signal drag_changed(power: float)
 var enabled: bool = false
@@ -26,6 +28,12 @@ func drag_power() -> float:
 
 func _input(event: InputEvent) -> void:
 	if not enabled:
+		return
+	if placing:
+		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed:
+			place_requested.emit(event.position)
+		elif event is InputEventScreenTouch and event.pressed:
+			place_requested.emit(event.position)
 		return
 	if event is InputEventScreenTouch:
 		if event.pressed and touch_id == -1:

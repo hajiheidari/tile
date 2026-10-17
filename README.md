@@ -1,3 +1,9 @@
+## v0.3 gameplay revision
+
+Each new match uses a fresh, shared seeded terrain. Shape and resistance stay fixed throughout the match so players can learn and respond to the ground. Use **Move marble**, tap the turquoise launch area, then **Ready to aim** before pulling back to shoot. Placement is optional; the default position still works. Moving does not use a turn.
+
+The current graphics remain an open issue following user feedback. This revision focuses on real terrain variation and player-controlled launch positions; it is not final art approval.
+
 # Tileh Bazi: Marbles Game
 
 An independent Espadna 3D marbles game, built with **Godot 4.5.1 / GDScript / Compatibility renderer**. Native iOS and Android are the product targets; browser and Windows builds are available for prototype review.

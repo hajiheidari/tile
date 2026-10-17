@@ -1,3 +1,14 @@
+# v0.3 — variable ground and placement (2026-10-17)
+
+- A fresh nonzero seed is generated when starting each new match through the qualifying flow. It remains fixed through that match, shared by both players. There is no random impulse or aim error. Eighteen broad bumps/depressions change mesh vertices and the actual collision surface, with local soil resistance from the same seed. The height offsets are millimetres over 10–26 cm patches, not decorative shader displacement.
+- Same 1.2 m/s shot on six fixed seeds produced endpoints up to **12.69 cm** apart. Repeating a seed is tested separately for consistent outcomes. This demonstrates variation, not that every possible power/position is equally difficult.
+- Launch placement works in both modes inside x = ±0.65 m, z = 0.72–1.07 m. Qualifying placement stays on the one-metre line with a finger-size snap zone. Overlaps and outside clicks are rejected. Placement consumes no shot. Active marble is held still while choosing/aiming, then participates in ordinary physics when released.
+- **99** rules/locale/physics checks, **17** controller checks and **8** placement/terrain assertions passed on Windows Jolt. Six-seed physical variation test passed. Existing seven-lane test describes the seed-zero calibration surface, not the live randomized ground.
+- Soil coloration now follows the local resistance field; surface detail is reduced for a more illustrated look. **The user has rejected the current overall graphics. That issue is still open.** These material changes do not constitute a completed replacement for the hand, environment art and animation.
+- Web preview is rebuilt locally. Phone touch/haptics and production mobile performance remain untested.
+
+---
+
 # Validation — 2026-10-17 (Asia/Tehran)
 
 ## Executed
